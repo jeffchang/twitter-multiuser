@@ -7,12 +7,23 @@
     # we should show her a form that will allow her to send a tweet. If there is no
     # user logged-in, we should show the sign-in button.
   %>
-  <% if @access_token %>
+  <% if @user %>
     <div>
       <p>
-        <strong>token:</strong> <%= @access_token.token %><br>
-        <strong>secret:</strong> <%= @access_token.secret %><br>
+        Welcome, <%= @user.username %>!
       </p>
+      <form id="tweet" action="/" method="post">
+        <input type="text" name="tweet" placeholder="Enter your tweet here!">
+        <input type="submit" value="Submit!">
+      </form>
+      <p>
+        Your most recent tweets:
+      </p>
+      <% @tweets.each_with_index do |tweet, index| %>
+        <p>
+          <%= "#{index + 1}. #{tweet}" %>
+        </p>
+      <% end %>
       <p>
         <button><a href="/sign_out">Sign Out</a></button>
       </p>

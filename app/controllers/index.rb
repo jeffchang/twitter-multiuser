@@ -1,5 +1,26 @@
 get '/' do
+  @user = User.find_by_username(session[:username]) rescue nil
+
+  if @user
+    Twitter.configure do |config|
+      config.oauth_token = @user.oauth_token
+      config.oauth_token_secret = @user.oauth_secret
+    end
+    @tweets = Twitter.user_timeline(@user.username).map(&:text)
+  end
+
+  session.delete(:request_token)
   erb :index
+end
+
+post '/' do
+  @user = User.find_by_username(session[:username]) rescue nil
+  Twitter.configure do |config|
+    config.oauth_token = @user.oauth_token
+    config.oauth_token_secret = @user.oauth_secret
+  end
+  Twitter.update(params[:tweet])
+  redirect '/'
 end
 
 get '/sign_in' do
@@ -20,6 +41,20 @@ get '/auth' do
 
   # at this point in the code is where you'll need to create your user account and store the access token
 
-  erb :index
-  
+  Twitter.configure do |config|
+    config.oauth_token = @access_token.token
+    config.oauth_token_secret = @access_token.secret
+  end
+
+  @user = User.find_by_username(Twitter.user.name) rescue nil
+  unless @user
+    @user = User.create({username: Twitter.user.name, oauth_token: @access_token.token, oauth_secret: @access_token.secret})
+  else
+    @user.oauth_token = @access_token.token
+    @user.oauth_secret = @access_token.secret
+    @user.save
+  end
+  session[:username] = @user.username
+
+  redirect '/'
 end
